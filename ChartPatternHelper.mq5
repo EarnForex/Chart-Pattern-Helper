@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright © 2013-2022, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.10"
+#property version   "1.11"
 
 #property description "Uses graphic objects (horizontal/trend lines, channels) to enter trades."
 #property description "Works in two modes:"
@@ -1258,8 +1258,7 @@ void SetComment(string c)
 }
 
 //+------------------------------------------------------------------+
-//| Calculates symbol leverage value based on required margin        |
-//| and current rates.                                               |
+//| Calculates unit cost based on profit calculation mode.           |
 //+------------------------------------------------------------------+
 double CalculateUnitCost()
 {
@@ -1317,9 +1316,11 @@ string GetSymbolByCurrencies(string base_currency, string profit_currency)
 
         // Get its base currency.
         string b_cur = SymbolInfoString(symbolname, SYMBOL_CURRENCY_BASE);
+        if (b_cur == "RUR") b_cur = "RUB";
 
         // Get its profit currency.
         string p_cur = SymbolInfoString(symbolname, SYMBOL_CURRENCY_PROFIT);
+        if (p_cur == "RUR") p_cur = "RUB";
 
         // If the currency pair matches both currencies, select it in Market Watch and return its name.
         if ((b_cur == base_currency) && (p_cur == profit_currency))
@@ -1367,7 +1368,9 @@ double GetPositionSize(double Entry, double StopLoss, ENUM_ORDER_TYPE dir)
     if (AccountCurrency == "RUR") AccountCurrency = "RUB";
 
     ProfitCurrency = SymbolInfoString(Symbol(), SYMBOL_CURRENCY_PROFIT);
+    if (ProfitCurrency == "RUR") ProfitCurrency = "RUB";
     BaseCurrency = SymbolInfoString(Symbol(), SYMBOL_CURRENCY_BASE);
+    if (BaseCurrency == "RUR") BaseCurrency = "RUB";
     CalcMode = (ENUM_SYMBOL_CALC_MODE)SymbolInfoInteger(Symbol(), SYMBOL_TRADE_CALC_MODE);
     double LotStep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
     int LotStep_digits = CountDecimalPlaces(LotStep);
@@ -1395,8 +1398,8 @@ double GetPositionSize(double Entry, double StopLoss, ENUM_ORDER_TYPE dir)
 
     double UnitCost = CalculateUnitCost();
 
-    // If profit currency is different from account currency and Symbol is not a Forex pair (CFD, futures, and so on).
-    if ((ProfitCurrency != AccountCurrency) && (CalcMode != SYMBOL_CALC_MODE_FOREX) && (CalcMode != SYMBOL_CALC_MODE_FOREX_NO_LEVERAGE))
+    // If profit currency is different from account currency and Symbol is not a Forex pair or futures (CFD, and so on).
+    if ((ProfitCurrency != AccountCurrency) && (CalcMode != SYMBOL_CALC_MODE_FOREX) && (CalcMode != SYMBOL_CALC_MODE_FOREX_NO_LEVERAGE) && (CalcMode != SYMBOL_CALC_MODE_FUTURES) && (CalcMode != SYMBOL_CALC_MODE_EXCH_FUTURES) && (CalcMode != SYMBOL_CALC_MODE_EXCH_FUTURES_FORTS))
     {
         double CCC = CalculateAdjustment(); // Valid only for loss calculation.
         // Adjust the unit cost.
