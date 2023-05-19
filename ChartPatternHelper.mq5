@@ -1,11 +1,11 @@
 ﻿//+------------------------------------------------------------------+
 //|                                             Chart Pattern Helper |
-//|                             Copyright © 2013-2022, EarnForex.com |
+//|                             Copyright © 2013-2023, EarnForex.com |
 //|                                       https://www.earnforex.com/ |
 //+------------------------------------------------------------------+
-#property copyright "Copyright © 2013-2022, EarnForex"
+#property copyright "Copyright © 2013-2023, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.11"
+#property version   "1.12"
 
 #property description "Uses graphic objects (horizontal/trend lines, channels) to enter trades."
 #property description "Works in two modes:"
@@ -767,7 +767,8 @@ void AdjustUpperAndLowerOrders()
         {
             if (ObjectFind(0, LowerBorderLine) >= 0) // Line.
             {
-                BorderLevel = NormalizeDouble(ObjectGetValueByTime(ChartID(), LowerBorderLine, Time[1]), _Digits);
+                if (ObjectGetInteger(ChartID(), LowerBorderLine, OBJPROP_TYPE) == OBJ_HLINE) BorderLevel = NormalizeDouble(ObjectGetDouble(0, LowerBorderLine, OBJPROP_PRICE, 0), _Digits);
+                else BorderLevel = NormalizeDouble(ObjectGetValueByTime(ChartID(), LowerBorderLine, Time[1]), _Digits);
             }
             else // Channel
             {
@@ -786,7 +787,8 @@ void AdjustUpperAndLowerOrders()
         {
             if (ObjectFind(0, UpperBorderLine) >= 0) // Line.
             {
-                BorderLevel = NormalizeDouble(ObjectGetValueByTime(ChartID(), UpperBorderLine, Time[1]), _Digits);
+                if (ObjectGetInteger(ChartID(), UpperBorderLine, OBJPROP_TYPE) == OBJ_HLINE) BorderLevel = NormalizeDouble(ObjectGetDouble(0, UpperBorderLine, OBJPROP_PRICE, 0), _Digits);
+                else BorderLevel = NormalizeDouble(ObjectGetValueByTime(ChartID(), UpperBorderLine, Time[1]), _Digits);
             }
             else // Channel
             {
