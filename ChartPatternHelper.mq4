@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright © 2013-2023, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.12"
+#property version   "1.13"
 #property strict
 
 #include <stdlib.mqh>
@@ -791,7 +791,7 @@ void AdjustUpperAndLowerOrders()
             {
                 RefreshRates();
                 NewVolume = GetPositionSize(Ask, UpperSL);
-                UpperTicket = ExecuteMarketOrder(OP_SELL, NewVolume, Ask, UpperSL, UpperTP);
+                UpperTicket = ExecuteMarketOrder(OP_BUY, NewVolume, Ask, UpperSL, UpperTP);
             }
         }
         return;

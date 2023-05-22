@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright © 2013-2023, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.12"
+#property version   "1.13"
 
 #property description "Uses graphic objects (horizontal/trend lines, channels) to enter trades."
 #property description "Works in two modes:"
