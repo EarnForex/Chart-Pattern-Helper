@@ -1,11 +1,11 @@
 ﻿//+------------------------------------------------------------------+
 //|                                             Chart Pattern Helper |
-//|                             Copyright © 2013-2023, EarnForex.com |
+//|                                  Copyright © 2024, EarnForex.com |
 //|                                       https://www.earnforex.com/ |
 //+------------------------------------------------------------------+
-#property copyright "Copyright © 2013-2023, EarnForex"
+#property copyright "Copyright © 2024, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.13"
+#property version   "1.14"
 
 #property description "Uses graphic objects (horizontal/trend lines, channels) to enter trades."
 #property description "Works in two modes:"
@@ -845,7 +845,7 @@ void AdjustUpperAndLowerOrders()
             {
                 Output("Skipping Modify Buy TP because open price is too close to Ask. FreezeLevel = " + DoubleToString(FreezeLevel, _Digits) + " OpenPrice = " + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN), 8) + " Ask = " + DoubleToString(Ask, _Digits));
             }
-            else if ((NormalizeDouble(PositionGetDouble(POSITION_TP), _Digits) != NormalizeDouble(UpperTP, _Digits)) && (UpperTP != 0))
+            else if ((MathAbs(PositionGetDouble(POSITION_TP) - UpperTP) > _Point / 2) && (UpperTP != 0))
             {
                 if (!Trade.PositionModify(_Symbol, PositionGetDouble(POSITION_SL), UpperTP))
                 {
@@ -889,7 +889,7 @@ void AdjustUpperAndLowerOrders()
             {
                 Output("Skipping Modify Sell TP because open price is too close to Bid. FreezeLevel = " + DoubleToString(FreezeLevel, _Digits) + " OpenPrice = " + DoubleToString(PositionGetDouble(POSITION_PRICE_OPEN), 8) + " Bid = " + DoubleToString(Bid, _Digits));
             }
-            else if ((NormalizeDouble(PositionGetDouble(POSITION_TP), _Digits) != LowerTP) && (NormalizeDouble(LowerTP, _Digits) != 0))
+            else if ((MathAbs(PositionGetDouble(POSITION_TP) - LowerTP) > _Point / 2) && (NormalizeDouble(LowerTP, _Digits) != 0))
             {
                 if (!Trade.PositionModify(_Symbol, PositionGetDouble(POSITION_SL), LowerTP))
                 {
@@ -917,7 +917,7 @@ void AdjustUpperAndLowerOrders()
             // Delete existing pending order
             if ((HaveBuy) || ((HaveSell) && (OneCancelsOther)) || (!UseUpper)) Trade.OrderDelete(ticket);
             // If volume needs to be updated - delete and recreate order with new volume. Also check if EA will be able to create new pending order at current price.
-            else if ((UpdatePendingVolume) && (OrderGetDouble(ORDER_VOLUME_CURRENT) != NewVolume))
+            else if ((UpdatePendingVolume) && (MathAbs(OrderGetDouble(ORDER_VOLUME_CURRENT) - NewVolume) > LotStep / 2))
             {
                 if ((UpperEntry - Ask > StopLevel) || (Ask - UpperEntry > StopLevel)) // Order can be re-created
                 {
@@ -965,7 +965,7 @@ void AdjustUpperAndLowerOrders()
                 continue;
             }
             // Otherwise, just update what needs to be updated.
-            else if ((NormalizeDouble(OrderGetDouble(ORDER_PRICE_OPEN), _Digits) != NormalizeDouble(UpperEntry, _Digits)) || (NormalizeDouble(OrderGetDouble(ORDER_SL), _Digits) != NormalizeDouble(UpperSL, _Digits)) || (NormalizeDouble(OrderGetDouble(ORDER_TP), _Digits) != NormalizeDouble(UpperTP, _Digits)))
+            else if ((MathAbs(OrderGetDouble(ORDER_PRICE_OPEN) - UpperEntry) > _Point / 2) || (MathAbs(OrderGetDouble(ORDER_SL) - UpperSL) > _Point / 2) || (MathAbs(OrderGetDouble(ORDER_TP) - UpperTP) > _Point / 2))
             {
                 // Avoid error 130 based on entry.
                 if (UpperEntry - Ask > StopLevel) // Current price below entry
@@ -976,7 +976,7 @@ void AdjustUpperAndLowerOrders()
                 {
                     order_type_string = "Limit";
                 }
-                else if (NormalizeDouble(OrderGetDouble(ORDER_PRICE_OPEN), _Digits) != NormalizeDouble(LowerEntry, _Digits)) continue;
+                else if (MathAbs(OrderGetDouble(ORDER_PRICE_OPEN) - UpperEntry) > _Point / 2) continue;
                 // Avoid error 130 based on stop-loss.
                 if (UpperEntry - UpperSL <= StopLevel)
                 {
@@ -1016,7 +1016,7 @@ void AdjustUpperAndLowerOrders()
             // Delete existing pending order.
             if (((HaveBuy) && (OneCancelsOther)) || (HaveSell) || (!UseLower)) Trade.OrderDelete(ticket);
             // If volume needs to be updated - delete and recreate order with new volume. Also check if EA will be able to create new pending order at current price.
-            else if ((UpdatePendingVolume) && (OrderGetDouble(ORDER_VOLUME_CURRENT) != NewVolume) && (Bid - LowerEntry > StopLevel))
+            else if ((UpdatePendingVolume) && (MathAbs(OrderGetDouble(ORDER_VOLUME_CURRENT) - NewVolume) > LotStep / 2) && (Bid - LowerEntry > StopLevel))
             {
                 if ((Bid - LowerEntry > StopLevel) || (LowerEntry - Bid > StopLevel)) // Order can be re-created
                 {
@@ -1062,8 +1062,8 @@ void AdjustUpperAndLowerOrders()
                 }
                 continue;
             }
-            // Otherwise just update what needs to be updated
-            else if ((NormalizeDouble(OrderGetDouble(ORDER_PRICE_OPEN), _Digits) != NormalizeDouble(LowerEntry, _Digits)) || (NormalizeDouble(OrderGetDouble(ORDER_SL), _Digits) != NormalizeDouble(LowerSL, _Digits)) || (NormalizeDouble(OrderGetDouble(ORDER_TP), _Digits) != NormalizeDouble(LowerTP, _Digits)))
+            // Otherwise, just update what needs to be updated
+            else if ((MathAbs(OrderGetDouble(ORDER_PRICE_OPEN) - LowerEntry) > _Point / 2) || (MathAbs(OrderGetDouble(ORDER_SL) - LowerSL) > _Point / 2) || (MathAbs(OrderGetDouble(ORDER_TP) - LowerTP) > _Point / 2))
             {
                 // Avoid error 130 based on entry.
                 if (Bid - LowerEntry > StopLevel) // Current price above entry
@@ -1074,7 +1074,7 @@ void AdjustUpperAndLowerOrders()
                 {
                     order_type_string = "Limit";
                 }
-                else if (NormalizeDouble(OrderGetDouble(ORDER_PRICE_OPEN), _Digits) != NormalizeDouble(LowerEntry, _Digits)) continue;
+                else if (MathAbs(OrderGetDouble(ORDER_PRICE_OPEN) - LowerEntry) > _Point / 2) continue;
                 // Avoid error 130 based on stop-loss.
                 if (LowerSL - LowerEntry <= StopLevel)
                 {
