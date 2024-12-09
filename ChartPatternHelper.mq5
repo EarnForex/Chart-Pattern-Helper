@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright © 2024, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.14"
+#property version   "1.15"
 
 #property description "Uses graphic objects (horizontal/trend lines, channels) to enter trades."
 #property description "Works in two modes:"
@@ -671,10 +671,22 @@ void FindOrders()
     HaveSellPending = false;
     HaveBuy = false;
     HaveSell = false;
-    if (PositionSelect(_Symbol))
+    if (AccountInfoInteger(ACCOUNT_MARGIN_MODE) == ACCOUNT_MARGIN_MODE_RETAIL_NETTING) // Netting:
     {
-        if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) HaveBuy = true;
-        else HaveSell = true;
+        if (PositionSelect(_Symbol))
+        {
+            if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) HaveBuy = true;
+            else HaveSell = true;
+        }
+    }
+    else // Hednging/exchange:
+    {
+        for (int i = 0; i < PositionsTotal(); i++)
+        {
+            if ((PositionGetString(POSITION_SYMBOL) != _Symbol) || (PositionGetInteger(POSITION_MAGIC) != Magic)) continue;
+            if (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) HaveBuy = true;
+            else HaveSell = true;
+        }
     }
     for (int i = 0; i < OrdersTotal(); i++)
     {
@@ -697,26 +709,42 @@ void AdjustObjects()
 {
     if (((HaveBuy) && (!HaveBuyPending)))
     {
-        RenameObject(UpperBorderLine);
-        RenameObject(UpperEntryLine);
-        RenameObject(EntryChannel);
+        if ((ObjectFind(0, UpperBorderLine) >= 0) || (ObjectFind(0, EntryChannel) >= 0))
+        {
+            Print("Buy position found, renaming chart objects...");
+            RenameObject(UpperBorderLine);
+            RenameObject(UpperEntryLine);
+            RenameObject(EntryChannel);
+        }
         if (OneCancelsOther)
         {
-            RenameObject(LowerBorderLine);
-            RenameObject(LowerEntryLine);
-            RenameObject(BorderChannel);
+            if ((ObjectFind(0, LowerBorderLine) >= 0) || (ObjectFind(0, BorderChannel) >= 0))
+            {
+                Print("OCO is on, renaming opposite chart objects...");
+                RenameObject(LowerBorderLine);
+                RenameObject(LowerEntryLine);
+                RenameObject(BorderChannel);
+            }
         }
     }
     if (((HaveSell) && (!HaveSellPending)))
     {
-        RenameObject(LowerBorderLine);
-        RenameObject(LowerEntryLine);
-        RenameObject(EntryChannel);
+        if ((ObjectFind(0, LowerEntryLine) >= 0) || (ObjectFind(0, EntryChannel) >= 0))
+        {
+            Print("Sell position found, renaming chart objects...");
+            RenameObject(LowerBorderLine);
+            RenameObject(LowerEntryLine);
+            RenameObject(EntryChannel);
+        }
         if (OneCancelsOther)
         {
-            RenameObject(UpperBorderLine);
-            RenameObject(UpperEntryLine);
-            RenameObject(BorderChannel);
+            if ((ObjectFind(0, UpperBorderLine) >= 0) || (ObjectFind(0, BorderChannel) >= 0))
+            {
+                Print("OCO is on, renaming opposite chart objects...");
+                RenameObject(UpperBorderLine);
+                RenameObject(UpperEntryLine);
+                RenameObject(BorderChannel);
+            }
         }
     }
 }

@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright © 2024, EarnForex"
 #property link      "https://www.earnforex.com/metatrader-expert-advisors/ChartPatternHelper/"
-#property version   "1.14"
+#property version   "1.15"
 #property strict
 
 #include <stdlib.mqh>
@@ -648,38 +648,54 @@ void AdjustObjects()
 {
     if (((HaveBuy) && (!HaveBuyPending)))
     {
-        RenameObject(UpperBorderLine);
-        RenameObject(UpperEntryLine);
-        RenameObject(EntryChannel);
+        if ((ObjectFind(0, UpperBorderLine) >= 0) || (ObjectFind(0, EntryChannel) >= 0))
+        {
+            Print("Buy position found, renaming chart objects...");
+            RenameObject(UpperBorderLine);
+            RenameObject(UpperEntryLine);
+            RenameObject(EntryChannel);
+        }
         if (OneCancelsOther)
         {
-            RenameObject(LowerBorderLine);
-            RenameObject(LowerEntryLine);
-            RenameObject(BorderChannel);
+            if ((ObjectFind(0, LowerBorderLine) >= 0) || (ObjectFind(0, BorderChannel) >= 0))
+            {
+                Print("OCO is on, renaming opposite chart objects...");
+                RenameObject(LowerBorderLine);
+                RenameObject(LowerEntryLine);
+                RenameObject(BorderChannel);
+            }
         }
     }
     if (((HaveSell) && (!HaveSellPending)))
     {
-        RenameObject(LowerBorderLine);
-        RenameObject(LowerEntryLine);
-        RenameObject(EntryChannel);
+        if ((ObjectFind(0, LowerEntryLine) >= 0) || (ObjectFind(0, EntryChannel) >= 0))
+        {
+            Print("Sell position found, renaming chart objects...");
+            RenameObject(LowerBorderLine);
+            RenameObject(LowerEntryLine);
+            RenameObject(EntryChannel);
+        }
         if (OneCancelsOther)
         {
-            RenameObject(UpperBorderLine);
-            RenameObject(UpperEntryLine);
-            RenameObject(BorderChannel);
+            if ((ObjectFind(0, UpperBorderLine) >= 0) || (ObjectFind(0, BorderChannel) >= 0))
+            {
+                Print("OCO is on, renaming opposite chart objects...");
+                RenameObject(UpperBorderLine);
+                RenameObject(UpperEntryLine);
+                RenameObject(BorderChannel);
+            }
         }
     }
 }
 
 void RenameObject(string Object)
 {
-    if (ObjectFind(Object) > -1) // If exists
+    if (ObjectFind(0, Object) > -1) // If exists
     {
         Print("Renaming ", Object, ".");
         // Get object's type, price/time coordinates, style properties.
-        int OT = ObjectType(Object);
-        double Price1 = ObjectGet(Object, OBJPROP_PRICE1);
+        ENUM_OBJECT OT = (ENUM_OBJECT)ObjectGetInteger(0, Object, OBJPROP_TYPE);
+        double Price1 = ObjectGetDouble(0, Object, OBJPROP_PRICE, 0);
         datetime Time1 = 0;
         double Price2 = 0;
         datetime Time2 = 0;
@@ -687,28 +703,28 @@ void RenameObject(string Object)
         datetime Time3 = 0;
         if ((OT == OBJ_TREND) || (OT == OBJ_CHANNEL))
         {
-            Time1 = (datetime)ObjectGet(Object, OBJPROP_TIME1);
-            Price2 = ObjectGet(Object, OBJPROP_PRICE2);
-            Time2 = (datetime)ObjectGet(Object, OBJPROP_TIME2);
+            Time1 = (datetime)ObjectGetInteger(0, Object, OBJPROP_TIME, 0);
+            Price2 = ObjectGetDouble(0, Object, OBJPROP_PRICE, 1);
+            Time2 = (datetime)ObjectGetInteger(0, Object, OBJPROP_TIME, 1);
             if (OT == OBJ_CHANNEL)
             {
-                Price3 = ObjectGet(Object, OBJPROP_PRICE3);
-                Time3 = (datetime)ObjectGet(Object, OBJPROP_TIME3);
+                Price3 = ObjectGetDouble(0, Object, OBJPROP_PRICE, 2);
+                Time3 = (datetime)ObjectGetInteger(0, Object, OBJPROP_TIME, 2);
             }
         }
-        color Color = (color)ObjectGet(Object, OBJPROP_COLOR);
-        int Style = (int)ObjectGet(Object, OBJPROP_STYLE);
-        int Width = (int)ObjectGet(Object, OBJPROP_WIDTH);
+        color Color = (color)ObjectGetInteger(0, Object, OBJPROP_COLOR);
+        ENUM_LINE_STYLE Style = (ENUM_LINE_STYLE)ObjectGetInteger(0, Object, OBJPROP_STYLE);
+        int Width = (int)ObjectGetInteger(0, Object, OBJPROP_WIDTH);
 
         // Delete object.
-        ObjectDelete(Object);
-
+        ObjectDelete(0, Object);
+        string NewObject = Object + IntegerToString(Magic);
         // Create the same object with new name and set the old style properties.
-        ObjectCreate(Object + IntegerToString(Magic), OT, 0, Time1, Price1, Time2, Price2, Time3, Price3);
-        ObjectSet(Object + IntegerToString(Magic), OBJPROP_COLOR, Color);
-        ObjectSet(Object + IntegerToString(Magic), OBJPROP_STYLE, Style);
-        ObjectSet(Object + IntegerToString(Magic), OBJPROP_WIDTH, Width);
-        ObjectSet(Object + IntegerToString(Magic), OBJPROP_RAY, true);
+        ObjectCreate(0, NewObject, OT, 0, Time1, Price1, Time2, Price2, Time3, Price3);
+        ObjectSetInteger(0, NewObject, OBJPROP_COLOR, Color);
+        ObjectSetInteger(0, NewObject, OBJPROP_STYLE, Style);
+        ObjectSetInteger(0, NewObject, OBJPROP_WIDTH, Width);
+        ObjectSetInteger(0, NewObject, OBJPROP_RAY, true);
     }
 }
 
